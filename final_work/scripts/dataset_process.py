@@ -92,6 +92,51 @@ exclude_columns = ['Id', 'AnonymId']
 numerical_columns = [col for col in filtered_df.select_dtypes(include='number').columns if col not in exclude_columns]
 filtered_df[numerical_columns] = filtered_df[numerical_columns].round(2)
 
+# Base renaming dictionary
+column_renames = {
+    'Csoport': 'Group',
+    'ZH': 'Final_Exam',
+    'Beadandó': 'Assignment',
+    'AnonymId': 'AnonymId',
+}
+
+# Only add 'Nap' and 'Óra' if they exist
+if 'Nap' in filtered_df.columns:
+    column_renames['Nap'] = 'Day'
+if 'Óra' in filtered_df.columns:
+    column_renames['Óra'] = 'Start_Hour'
+
+# Handle röpZH columns
+for col in filtered_df.columns:
+    if 'röpZH' in col:
+        parts = col.split('röpZH')
+        prefix = parts[0].strip()
+
+        if prefix == '':
+            new_name = 'Weekly_Exam'
+        elif prefix == '+1':
+            new_name = 'Bonus_Weekly_Exam'
+        elif prefix == '+1 (javító)':
+            new_name = 'Bonus_Weekly_Exam_Retake'
+        elif prefix.endswith('.'):
+            try:
+                num = int(prefix[:-1])
+                ordinal = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth',
+                           'Seventh', 'Eighth', 'Ninth', 'Tenth']
+                if 1 <= num <= len(ordinal):
+                    new_name = f"{ordinal[num-1]}_Weekly_Exam"
+                else:
+                    new_name = f"Week{num}_Weekly_Exam"
+            except ValueError:
+                new_name = f"{prefix}_Weekly_Exam"
+        else:
+            new_name = f"{prefix}_Weekly_Exam"
+
+        column_renames[col] = new_name
+
+# Apply renaming
+filtered_df = filtered_df.rename(columns=column_renames)
+
 # Step 6: Save the final processed data to one Excel file
 #output_file = os.path.join(final_directory, 'dataset_without_groups_and_time.xlsx')
 output_file = os.path.join(final_directory, 'dataset_with_groups_and_time.xlsx')
