@@ -26,9 +26,9 @@ def classify_grade_subject(score, max_score=50, interval=15):
     elif good_threshold < score <= excellent_threshold:
         return "GOOD"
     elif medium_threshold < score <= good_threshold:
-        return "MEDIUM"
+        return "AVERAGE"
     elif sufficient_threshold < score <= medium_threshold:
-        return "SUFFICIENT"
+        return "SATISFACTORY"
     else:
         return "FAIL"
 
@@ -39,7 +39,7 @@ def classify_grade_performance(score, max_score=50):
     if score >= high_threshold:
         return "HIGH"
     elif score >= medium_threshold:
-        return "MEDIUM"
+        return "AVERAGE"
     else:
         return "LOW"
     
@@ -58,9 +58,9 @@ def classify_grade_buffer(score, max_score=50, interval=15, buffer=0.06):
     elif good_threshold < score <= excellent_threshold or (good_threshold - buffer_zone) <= score < excellent_threshold:
         return "GOOD"
     elif medium_threshold < score <= good_threshold or (medium_threshold - buffer_zone) <= score < good_threshold:
-        return "MEDIUM"
+        return "AVERAGE"
     elif sufficient_threshold < score <= medium_threshold or (sufficient_threshold - buffer_zone) <= score < medium_threshold:
-        return "SUFFICIENT"
+        return "SATISFACTORY"
     else:
         return "FAIL"
     
