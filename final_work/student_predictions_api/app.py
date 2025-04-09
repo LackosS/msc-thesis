@@ -4,16 +4,15 @@ import joblib
 import numpy as np
 import os
 from typing import List
-from sklearn.svm import SVR
 
 app = FastAPI()
 
-STACKED_SVM_MODEL_PATH = "stacked_svm.pkl"
+BAGGED_RF_MODEL_PATH = "bagged_rf.pkl"
 
-if os.path.exists(STACKED_SVM_MODEL_PATH):
-    model_svm_six = joblib.load(STACKED_SVM_MODEL_PATH)
+if os.path.exists(BAGGED_RF_MODEL_PATH):
+    model_bagged_rf_six = joblib.load(BAGGED_RF_MODEL_PATH)
 else:
-    raise Exception(f"SVM model file '{STACKED_SVM_MODEL_PATH}' not found.")
+    raise Exception(f"Bagged RF model file '{BAGGED_RF_MODEL_PATH}' not found.")
 
 def classify_grade_subject(score, max_score=50, interval=15):
     excellent_threshold = max_score * 0.85  # 42.5
@@ -26,9 +25,9 @@ def classify_grade_subject(score, max_score=50, interval=15):
     elif good_threshold < score <= excellent_threshold:
         return "GOOD"
     elif medium_threshold < score <= good_threshold:
-        return "AVERAGE"
+        return "MEDIUM"
     elif sufficient_threshold < score <= medium_threshold:
-        return "SATISFACTORY"
+        return "SUFFICIENT"
     else:
         return "FAIL"
 
@@ -39,7 +38,7 @@ def classify_grade_performance(score, max_score=50):
     if score >= high_threshold:
         return "HIGH"
     elif score >= medium_threshold:
-        return "AVERAGE"
+        return "MEDIUM"
     else:
         return "LOW"
     
@@ -58,9 +57,9 @@ def classify_grade_buffer(score, max_score=50, interval=15, buffer=0.06):
     elif good_threshold < score <= excellent_threshold or (good_threshold - buffer_zone) <= score < excellent_threshold:
         return "GOOD"
     elif medium_threshold < score <= good_threshold or (medium_threshold - buffer_zone) <= score < good_threshold:
-        return "AVERAGE"
+        return "MEDIUM"
     elif sufficient_threshold < score <= medium_threshold or (sufficient_threshold - buffer_zone) <= score < medium_threshold:
-        return "SATISFACTORY"
+        return "SUFFICIENT"
     else:
         return "FAIL"
     
@@ -80,10 +79,10 @@ class StudentsList(BaseModel):
     students: List[StudentData]
 
 class PredictionResponse(BaseModel):
-    svm_stacked_prediction: float
-    svm_stacked_classification_performance_tiered: str
-    svm_stacked_classification_subject_based: str
-    svm_stacked_classification_buffer_zone: str
+    bagged_rf_prediction: float
+    bagged_rf_classification_performance_tiered: str
+    bagged_rf_classification_subject_based: str
+    bagged_rf_classification_buffer_zone: str
 
 class PredictionsListResponse(BaseModel):
     predictions: List[PredictionResponse]
@@ -101,16 +100,16 @@ def predict_grades(input_data: StudentsList):
                 student.assignment
             ]).reshape(1, -1)
 
-            svm_prediction = np.round(model_svm_six.predict(input_array)[0], 2)
-            svm_classification_performance_tiered = classify_grade_performance(svm_prediction)
-            svm_classification_subject_based = classify_grade_subject(svm_prediction)
-            svm_classification_buffer_zone = classify_grade_buffer(svm_prediction)
+            bagged_rf_prediction = np.round(model_bagged_rf_six.predict(input_array)[0], 2)
+            bagged_rf_classification_performance_tiered = classify_grade_performance(bagged_rf_prediction)
+            bagged_rf_classification_subject_based = classify_grade_subject(bagged_rf_prediction)
+            bagged_rf_classification_buffer_zone = classify_grade_buffer(bagged_rf_prediction)
 
             results.append(PredictionResponse(
-                svm_stacked_prediction=svm_prediction,
-                svm_stacked_classification_performance_tiered=svm_classification_performance_tiered,
-                svm_stacked_classification_subject_based = svm_classification_subject_based,
-                svm_stacked_classification_buffer_zone = svm_classification_buffer_zone,
+                bagged_rf_prediction=bagged_rf_prediction,
+                bagged_rf_classification_performance_tiered=bagged_rf_classification_performance_tiered,
+                bagged_rf_classification_subject_based = bagged_rf_classification_subject_based,
+                bagged_rf_classification_buffer_zone = bagged_rf_classification_buffer_zone,
             ))
 
         return PredictionsListResponse(predictions=results)
