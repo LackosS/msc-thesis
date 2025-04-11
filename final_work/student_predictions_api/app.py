@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 import os
 from typing import List
+import pandas as pd
 
 app = FastAPI()
 
@@ -11,6 +12,7 @@ BAGGED_RF_MODEL_PATH = "bagged_rf.pkl"
 
 if os.path.exists(BAGGED_RF_MODEL_PATH):
     model_bagged_rf_six = joblib.load(BAGGED_RF_MODEL_PATH)
+    print(model_bagged_rf_six.feature_names_in_)
 else:
     raise Exception(f"Bagged RF model file '{BAGGED_RF_MODEL_PATH}' not found.")
 
@@ -64,16 +66,16 @@ def classify_grade_buffer(score, max_score=50, interval=15, buffer=0.06):
         return "FAIL"
     
 class StudentData(BaseModel):
-    group: int
-    day: int
-    start_hour: int
-    first_zh: float
-    second_zh: float
-    third_zh: float
-    fourth_zh: float
-    fifth_zh: float
-    sixth_zh: float
-    assignment: float
+    Group: int
+    First_Weekly_Exam: float
+    Second_Weekly_Exam: float
+    Third_Weekly_Exam: float
+    Fourth_Weekly_Exam: float
+    Fifth_Weekly_Exam: float
+    Sixth_Weekly_Exam: float
+    Assignment: float
+    Day: int
+    Start_Hour: int
 
 class StudentsList(BaseModel):
     students: List[StudentData]
@@ -93,14 +95,9 @@ def predict_grades(input_data: StudentsList):
         results = []
 
         for student in input_data.students:
-            input_array = np.array([
-                student.group, student.day, student.start_hour,
-                student.first_zh, student.second_zh, student.third_zh,
-                student.fourth_zh, student.fifth_zh, student.sixth_zh,
-                student.assignment
-            ]).reshape(1, -1)
+            input_df = pd.DataFrame([student.dict()])
 
-            bagged_rf_prediction = np.round(model_bagged_rf_six.predict(input_array)[0], 2)
+            bagged_rf_prediction = np.round(model_bagged_rf_six.predict(input_df)[0], 2)
             bagged_rf_classification_performance_tiered = classify_grade_performance(bagged_rf_prediction)
             bagged_rf_classification_subject_based = classify_grade_subject(bagged_rf_prediction)
             bagged_rf_classification_buffer_zone = classify_grade_buffer(bagged_rf_prediction)
