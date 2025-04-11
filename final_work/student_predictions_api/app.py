@@ -12,7 +12,6 @@ BAGGED_RF_MODEL_PATH = "bagged_rf.pkl"
 
 if os.path.exists(BAGGED_RF_MODEL_PATH):
     model_bagged_rf_six = joblib.load(BAGGED_RF_MODEL_PATH)
-    print(model_bagged_rf_six.feature_names_in_)
 else:
     raise Exception(f"Bagged RF model file '{BAGGED_RF_MODEL_PATH}' not found.")
 
