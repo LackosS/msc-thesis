@@ -62,23 +62,10 @@ merged_improg = pd.concat(improg_data, ignore_index=True)
 # Merge progalap with improg
 final_merged_df = pd.concat([merged_progalap, merged_improg], ignore_index=True)
 
-# Step 2: Add a new column 'Id' before 'AnonymId' and assign unique IDs
-id_map = {}
-current_id = 1
-
-def get_id(anonym_id):
-    global current_id
-    if anonym_id not in id_map:
-        id_map[anonym_id] = current_id
-        current_id += 1
-    return id_map[anonym_id]
-
-final_merged_df.insert(0, 'Id', final_merged_df['AnonymId'].map(get_id))
-
-# Step 3: Fill empty fields (NaN) with zero
+# Step 2: Fill empty fields (NaN) with zero
 final_merged_df_filled = final_merged_df.fillna(0)
 
-# Step 4: Filter rows based on the criteria
+# Step 3: Filter rows based on the criteria
 ropzh_columns = [col for col in final_merged_df_filled.columns if 'röpZH' in col]
 final_merged_df_filled['röpZH_sum'] = final_merged_df_filled[ropzh_columns].sum(axis=1)
 
@@ -87,8 +74,8 @@ filtered_df = filtered_df[~((filtered_df['röpZH_sum'] <= 5) & (filtered_df['ZH'
 
 filtered_df = filtered_df.drop(columns=['röpZH_sum'])
 
-# Step 5: Round numerical values except specific columns
-exclude_columns = ['Id', 'AnonymId']
+# Step 4: Round numerical values except specific columns
+exclude_columns = ['AnonymId']
 numerical_columns = [col for col in filtered_df.select_dtypes(include='number').columns if col not in exclude_columns]
 filtered_df[numerical_columns] = filtered_df[numerical_columns].round(2)
 
@@ -137,7 +124,7 @@ for col in filtered_df.columns:
 # Apply renaming
 filtered_df = filtered_df.rename(columns=column_renames)
 
-# Step 6: Save the final processed data to one Excel file
+# Step 5: Save the final processed data to one Excel file
 #output_file = os.path.join(final_directory, 'dataset_without_groups_and_time.xlsx')
 output_file = os.path.join(final_directory, 'dataset_with_groups_and_time.xlsx')
 filtered_df.to_excel(output_file, index=False)
